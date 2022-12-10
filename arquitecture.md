@@ -11,3 +11,15 @@ Crear un smart contract: + transferencias entre terceros pagando comision + depl
   -Emitir un evento por transferencia.
 - Hacer testeos y deploy
 - Conectar a la testnet.
+
+              NFTTicket
+                  |
+              sell ticket
+                  |
+                 / \
+            seller  fee (royalty)
+                        |
+                    payment splitter
+                          |
+                         / \
+                  travelX   airline
