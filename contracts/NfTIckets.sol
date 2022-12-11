@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
+import "./AirlineTickets.sol";
 
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
@@ -23,8 +24,8 @@ contract NFTtrade {
     /// @param tokenID id of the NFT Ticket
     /// @param amount price set for the NFT
     function sellTicket(uint256 tokenID, uint256 amount) public {
-        require(ownerOf(tokenID) === msg.sender, "You are not the owner of this ticket")
-        require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not sell this ticket. Deadline expired")
+        require(ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
+        require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not sell this ticket. Deadline expired");
         nftPrice[tokenID] = amount;
     }
 
@@ -35,11 +36,11 @@ contract NFTtrade {
     /// @param _to address of the new owner of the NFT (can not be the same address that buys)
     
     function transferNFT(uint256 tokenID, address _to) public payable {
-        require(nftPrice[tokenID] > 0, "This ticket is not for sale")
-        require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired")
+        require(nftPrice[tokenID] > 0, "This ticket is not for sale");
+        require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
         nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
-        safeTransferFrom(ownerOf(tokenID), _to, tokenID)
-        emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp)
+        safeTransferFrom(ownerOf(tokenID), _to, tokenID);
+        emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
 
     }
 }
