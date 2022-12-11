@@ -6,14 +6,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Contract to create mock NFTTickets for practice
 
-contract NFTtrade is ERC721Royalty, Ownable{
+contract NFTCreator is ERC721Royalty, Ownable {
+
 address travelx; 
 address airline;
-    constructor(address _travelX, address _airline) ERC721 ("TravelX", "TVX"){
 
+    constructor(address _travelX, address _airline) ERC721 ("TravelX", "TVX"){
         travelx = _travelX;
         airline= _airline;
-
     }
 
 
@@ -24,9 +24,9 @@ function createTicket (uint8 _data) onlyOwner public view {
     require(_data >= block.timestamp);
     uint256 deadline = _data;
     uint256 tokenId=totalSupply;
+
+    // ver si no es _safeMint para poder pasar un 3er parametro de data
     _mint(travelX,tokenId,deadline) 
-
-
 } 
 
 function _feeDenominator();
