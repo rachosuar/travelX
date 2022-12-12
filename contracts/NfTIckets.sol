@@ -1,27 +1,37 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/interfaces/IERC721.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./AirlineTickets.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
-contract NFTtrade is Ownable {
+contract NFTtrade is Ownable,ERC721Royalty {
     event TicketCreated(uint256 _id, uint256 price, uint256 timestamp);
     event nftTransfer(address _from, address _to, uint256 id, uint256 timestamp);
 
     // state variables
-
     //set Airline and TravelX addresses
+    address splitter;
+    
+    constructor( address _splitter) ERC721 ("TravelX", "TVX"){
+        splitter= _splitter;
+ ////@dev Sets the royalty information for all NFTs.
+    _setDefaultRoyalty(splitter, 5000) ; 
+    }
+    /// @notice Token address USDC
+    IERC20 USDCToken  =  IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
 
     /// @notice Deadline timestamp for transfer deadline for each NFT.
-    mapping (uint256 => uint256) public nftDeadlineTransfer;
+    mapping (uint256 => uint256)  nftDeadlineTransfer;
 
     /// @notice Price for each NFT Ticket
-    mapping (uint256 => uint256) public nftPrice;
+    mapping (uint256 => uint256)  nftPrice;
 
-    uint256 totalSupply=AirlineTickets.balanceOf(address(this)); //ask how many tickets were minted to set the id
+    uint256 totalSupply = 0;
+    //ask how many tickets were minted to set the id
       /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
@@ -30,6 +40,7 @@ contract NFTtrade is Ownable {
         _mint(address(this),totalSupply);
         nftDeadlineTransfer[totalSupply]=timestamp;
         nftPrice[totalSupply]=price;
+        totalSupply+=1;
 
         emit TicketCreated(totalSupply, price, timestamp);
        
@@ -51,9 +62,13 @@ contract NFTtrade is Ownable {
     /// @param tokenID id of the NFT Ticket
     /// @param _to address of the new owner of the NFT (can not be the same address that buys)
     
-    function transferNFT(uint256 tokenID, address _to) public payable {
+    function transferNFT(uint256 tokenID, address _to) public {
+        //require(curreny == usdc, "wrong token");
         require(nftPrice[tokenID] > 0, "This ticket is not for sale");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
+        require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"The amount is not correct");
+        USDCToken.approve(address(this), nftPrice[tokenID]);
+        USDCToken.transfer(ownerOf(tokenID),nftPrice[tokenID]);
         nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
         safeTransferFrom(ownerOf(tokenID), _to, tokenID);
         emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
