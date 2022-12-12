@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
-contract NFTtrade is Ownable,ERC721Royalty {
+contract NFTickets is Ownable,ERC721Royalty {
     event TicketCreated(uint256 _id, uint256 price, uint256 timestamp);
     event nftTransfer(address _from, address _to, uint256 id, uint256 timestamp);
 
@@ -20,10 +20,14 @@ contract NFTtrade is Ownable,ERC721Royalty {
         splitter= _splitter;
  ////@dev Sets the royalty information for all NFTs.
     _setDefaultRoyalty(splitter, 5000) ; 
+
+    
     }
     /// @notice Token address USDC
-    IERC20 USDCToken  =  IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-
+    IERC20 USDCToken;
+    function setToken (address _token) public onlyOwner{
+    USDCToken  =  IERC20(_token);
+    }
     /// @notice Deadline timestamp for transfer deadline for each NFT.
     mapping (uint256 => uint256)  nftDeadlineTransfer;
 
