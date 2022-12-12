@@ -21,7 +21,7 @@ contract NFTtrade is Ownable {
     /// @notice Price for each NFT Ticket
     mapping (uint256 => uint256) public nftPrice;
 
-    uint256 totalSupply=AirlineTickets.balanceOf(address(this));
+    uint256 totalSupply=AirlineTickets.balanceOf(address(this)); //ask how many tickets were minted to set the id
       /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading

@@ -10,25 +10,17 @@ contract NFTCreator is ERC721Royalty, Ownable {
 
 address travelx; 
 address airline;
+address splitter;
 
-    constructor(address _travelX, address _airline) ERC721 ("TravelX", "TVX"){
+    constructor(address _travelX, address _airline, address _splitter) ERC721 ("TravelX", "TVX"){
         travelx = _travelX;
         airline= _airline;
+        splitter= _splitter;
+
+ ////@dev Sets the royalty information for all NFTs.
+
+    _setDefaultRoyalty(splitter, 5000) ; 
     }
 
-
-/// @dev Create tickets and sends it to travelX addres
-/// @param _data sends timestamp of 72hs befor travel date.
-
-function createTicket (uint8 _data) onlyOwner public view {
-    require(_data >= block.timestamp);
-    uint256 deadline = _data;
-    uint256 tokenId=totalSupply;
-
-    // ver si no es _safeMint para poder pasar un 3er parametro de data
-    _mint(travelX,tokenId,deadline) 
-} 
-
-function _feeDenominator();
-
+     
 }
