@@ -2,11 +2,13 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/interfaces/IERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./AirlineTickets.sol";
 
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
-contract NFTtrade {
+contract NFTtrade is Ownable {
+    event TicketCreated(uint256 _id, uint256 price, uint256 timestamp);
     event nftTransfer(address _from, address _to, uint256 id, uint256 timestamp);
 
     // state variables
@@ -18,6 +20,20 @@ contract NFTtrade {
 
     /// @notice Price for each NFT Ticket
     mapping (uint256 => uint256) public nftPrice;
+
+    uint256 totalSupply=AirlineTickets.balanceOf(address(this));
+      /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
+    /// @dev RachoSuar - TinchoMon
+    /// @param timestamp timestamp of deadline for trading
+    /// @param price price set for the NFT
+    function createTicket(uint256 timestamp, uint256 price) public onlyOwner {
+        _mint(address(this),totalSupply);
+        nftDeadlineTransfer[totalSupply]=timestamp;
+        nftPrice[totalSupply]=price;
+
+        emit TicketCreated(totalSupply, price, timestamp);
+       
+    }
 
     /// @notice set price for selling NFT Ticket - If price is 0 is not for sale
     /// @dev RachoSuar - TinchoMon
