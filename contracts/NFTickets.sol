@@ -29,10 +29,10 @@ contract NFTickets is Ownable,ERC721Royalty {
     USDCToken  =  IERC20(_token);
     }
     /// @notice Deadline timestamp for transfer deadline for each NFT.
-    mapping (uint256 => uint256)  nftDeadlineTransfer;
+    mapping (uint256 => uint256)  public nftDeadlineTransfer;
 
     /// @notice Price for each NFT Ticket
-    mapping (uint256 => uint256)  nftPrice;
+    mapping (uint256 => uint256) public  nftPrice;
 
     uint256 totalSupply = 0;
     //ask how many tickets were minted to set the id
@@ -70,9 +70,9 @@ contract NFTickets is Ownable,ERC721Royalty {
         //require(curreny == usdc, "wrong token");
         require(nftPrice[tokenID] > 0, "This ticket is not for sale");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
-        require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"The amount is not correct");
-        USDCToken.approve(address(this), nftPrice[tokenID]);
-        USDCToken.transfer(ownerOf(tokenID),nftPrice[tokenID]);
+        require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"Unsufficient founds on the account");
+        USDCToken.approve(ownerOf(tokenID), nftPrice[tokenID]);
+        USDCToken.transferFrom(msg.sender,ownerOf(tokenID),nftPrice[tokenID]);
         nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
         safeTransferFrom(ownerOf(tokenID), _to, tokenID);
         emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
