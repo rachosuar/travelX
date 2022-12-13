@@ -94,7 +94,7 @@ describe("NFTickets", function () {
       const ticketDeadLine = await ticketsInstance.nftDeadlineTransfer(0);
 
       expect(balanceAfter).to.equal(balanceBefore + 1);
-      expect(ticketPrice).to.equal(0);
+      expect(ticketPrice).to.equal(100);
       expect(ticketDeadLine).to.equal(1671231974);
       const ticketOwner = await ticketsInstance.ownerOf(0);
       expect(ticketOwner).to.equal(ticketsAddress);
@@ -146,11 +146,14 @@ describe("NFTickets", function () {
       );
       paymentApprove.wait();
 
-      const transferApprove = await ticketsInstanceForContract.approve(sigAddrs.buyer, 0);
-      transferApprove.wait();
+      console.log(await ticketsInstance.ownerOf(0))
+      console.log(ticketsInstance.address)
 
-      const addressAprobado = await ticketsInstance.getApproved(0)  
-      console.log(addressAprobado)
+      // const transferApprove = await ticketsInstance.approve(sigAddrs.buyer, 0);
+      // transferApprove.wait();
+
+      // const addressAprobado = await ticketsInstance.getApproved(0)  
+      // console.log(addressAprobado)
 
       const buyTicket = await ticketInstanceForBuyer.transferNFT(
         0,

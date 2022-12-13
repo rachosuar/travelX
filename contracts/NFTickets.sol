@@ -43,11 +43,11 @@ contract NFTickets is Ownable,ERC721Royalty {
     function createTicket(uint256 timestamp) public onlyOwner {
         _mint(address(this),totalSupply);
         nftDeadlineTransfer[totalSupply]=timestamp;
-        nftPrice[totalSupply]=0;
-        totalSupply+=1;
+        nftPrice[totalSupply]=100;
 
         emit TicketCreated(totalSupply, 0, timestamp);
-        setApprovalForAll(address(this), true);
+        //approve(address(this), totalSupply);
+        totalSupply+=1;
        
     }
 
@@ -59,7 +59,7 @@ contract NFTickets is Ownable,ERC721Royalty {
         require(ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not sell this ticket. Deadline expired");
         nftPrice[tokenID] = amount;
-        transferFrom(msg.sender, address(this), tokenID);
+        //transferFrom(msg.sender, address(this), tokenID);
     }
 
 
@@ -74,12 +74,26 @@ contract NFTickets is Ownable,ERC721Royalty {
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
         require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"Unsufficient founds on the account");
         
-        USDCToken.approve(address(this), nftPrice[tokenID]);
-        USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]);
-        nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
+        
+        //USDCToken.approve(address(this), nftPrice[tokenID]);
+        USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]*95/100);
+        USDCToken.transferFrom(msg.sender, contrato splitter,nftPrice[tokenID]*5/100);
 
-        approve(_to,tokenID);
-        transferFrom(ownerOf(tokenID), _to, tokenID);
+        require(_isApprovedOrOwner(_msgSender(), tokenID) || ownerOf(tokenID) == address(this), "ERC721: caller is not token owner or approved");
+        _safeTransfer(ownerOf(tokenID), _to, tokenID, "");
         emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
     }
+
+
+        function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenID, /* firstTokenId */
+        uint256 batchSize
+    ) internal virtual override {
+        require(batchSize == 1, "Incorrect batch size");
+        nftPrice[firstTokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
+        super._beforeTokenTransfer(from,to,firstTokenID, batchSize);
+    }
+
 }
