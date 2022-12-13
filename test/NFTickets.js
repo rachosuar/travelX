@@ -57,9 +57,7 @@ describe("NFTickets", function () {
       );
 
       const buyerBalance = await stablecoinInstance.balanceOf(sigAddrs.buyer);
-      expect(buyerBalance).to.equal(
-        hre.ethers.utils.parseUnits("100000.0", 2)
-      );
+      expect(buyerBalance).to.equal(hre.ethers.utils.parseUnits("100000.0", 2));
 
       const stablecoinSymbol = await stablecoinInstance.symbol();
       expect(stablecoinSymbol).to.equal("FUSDC");
@@ -117,38 +115,62 @@ describe("NFTickets", function () {
     });
 
     it("Should allow to buy a ticket", async function () {
+      const ticketInstanceForBuyer = await ticketsInstance.connect(
+        sigInstances.buyer
+      );
+      const BuyerStablecoinInstance = await stablecoinInstance.connect(
+        sigInstances.buyer
+      );
 
-      const ticketInstanceForBuyer = await ticketsInstance.connect(sigInstances.buyer);
-      const BuyerStablecoinInstance = await stablecoinInstance.connect(sigInstances.buyer);
+      const nftPrice = await ticketsInstance.nftPrice(0);
 
-      const nftPrice = await ticketsInstance.nftPrice(0)
-
-      const StablecoinContractBalanceBefore = await stablecoinInstance.balanceOf(ticketsAddress);
-      const StablecoinBuyerBalanceBefore = await stablecoinInstance.balanceOf(sigAddrs.buyer);
-      const TicketsContractBalanceBefore = await ticketsInstance.balanceOf(ticketsAddress);
-      const TicketsBuyerBalanceBefore = await ticketsInstance.balanceOf(sigAddrs.buyer);
+      const StablecoinContractBalanceBefore =
+        await stablecoinInstance.balanceOf(ticketsAddress);
+      const StablecoinBuyerBalanceBefore = await stablecoinInstance.balanceOf(
+        sigAddrs.buyer
+      );
+      const TicketsContractBalanceBefore = await ticketsInstance.balanceOf(
+        ticketsAddress
+      );
+      const TicketsBuyerBalanceBefore = await ticketsInstance.balanceOf(
+        sigAddrs.buyer
+      );
 
       const paymentApprove = await BuyerStablecoinInstance.approve(
         ticketsAddress,
         nftPrice
       );
+      paymentApprove.wait();
 
-      const buyTicket = await ticketInstanceForBuyer.transferNFT(0,sigAddrs.buyer);
+      const transferApprove = await ticketsInstance.approve(sigAddrs.buyer, 0);
+      transferApprove.wait();
+      const buyTicket = await ticketInstanceForBuyer.transferNFT(
+        0,
+        sigAddrs.buyer
+      );
       buyTicket.wait();
 
-      const StablecoinContractBalanceAfter = await stablecoinInstance.balanceOf(ticketsAddress);
-      const StablecoinBuyerBalanceAfter = await stablecoinInstance.balanceOf(sigAddrs.buyer);
-      const TicketsContractBalanceAfter = await ticketsInstance.balanceOf(ticketsAddress);
-      const TicketsBuyerBalanceAfter = await ticketsInstance.balanceOf(sigAddrs.buyer);
+      const StablecoinContractBalanceAfter = await stablecoinInstance.balanceOf(
+        ticketsAddress
+      );
+      const StablecoinBuyerBalanceAfter = await stablecoinInstance.balanceOf(
+        sigAddrs.buyer
+      );
+      const TicketsContractBalanceAfter = await ticketsInstance.balanceOf(
+        ticketsAddress
+      );
+      const TicketsBuyerBalanceAfter = await ticketsInstance.balanceOf(
+        sigAddrs.buyer
+      );
 
       expect(StablecoinContractBalanceAfter).to.equal(
-        StablecoinContractBalanceBefore.add(nftPrice));
+        StablecoinContractBalanceBefore.add(nftPrice)
+      );
 
       expect(StablecoinBuyerBalanceAfter).to.equal(
-        StablecoinBuyerBalanceBefore.sub(nftPrice));
-
+        StablecoinBuyerBalanceBefore.sub(nftPrice)
+      );
     });
-
   });
 });
 
