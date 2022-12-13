@@ -85,8 +85,7 @@ describe("NFTickets", function () {
     it("Should create an NFT Ticket", async function () {
       const balanceBefore = await ticketsInstance.balanceOf(ticketsAddress);
       const createTicket = await ticketsInstance.createTicket(
-        1671231974,
-        hre.ethers.utils.parseUnits("1000.0", 2)
+        1671231974
       );
       createTicket.wait();
 
@@ -95,7 +94,7 @@ describe("NFTickets", function () {
       const ticketDeadLine = await ticketsInstance.nftDeadlineTransfer(0);
 
       expect(balanceAfter).to.equal(balanceBefore + 1);
-      expect(ticketPrice).to.equal(hre.ethers.utils.parseUnits("1000.0", 2));
+      expect(ticketPrice).to.equal(0);
       expect(ticketDeadLine).to.equal(1671231974);
       const ticketOwner = await ticketsInstance.ownerOf(0);
       expect(ticketOwner).to.equal(ticketsAddress);
@@ -105,9 +104,9 @@ describe("NFTickets", function () {
       const ticketsInstanceForNonOwner = await ticketsInstance.connect(
         sigInstances.nonOwner
       );
+
       const createTicket = ticketsInstanceForNonOwner.createTicket(
-        1671231974,
-        1000
+        1671231974
       );
       await expect(createTicket).to.be.revertedWith(
         "Ownable: caller is not the owner"
@@ -115,6 +114,11 @@ describe("NFTickets", function () {
     });
 
     it("Should allow to buy a ticket", async function () {
+      
+      const ticketsInstanceForContract = await ticketsInstance.connect(
+        ticketsAddress
+      );
+      
       const ticketInstanceForBuyer = await ticketsInstance.connect(
         sigInstances.buyer
       );
@@ -142,8 +146,12 @@ describe("NFTickets", function () {
       );
       paymentApprove.wait();
 
-      const transferApprove = await ticketsInstance.approve(sigAddrs.buyer, 0);
+      const transferApprove = await ticketsInstanceForContract.approve(sigAddrs.buyer, 0);
       transferApprove.wait();
+
+      const addressAprobado = await ticketsInstance.getApproved(0)  
+      console.log(addressAprobado)
+
       const buyTicket = await ticketInstanceForBuyer.transferNFT(
         0,
         sigAddrs.buyer

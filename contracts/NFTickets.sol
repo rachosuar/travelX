@@ -40,14 +40,13 @@ contract NFTickets is Ownable,ERC721Royalty {
       /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
-    /// @param price price set for the NFT
-    function createTicket(uint256 timestamp, uint256 price) public onlyOwner {
+    function createTicket(uint256 timestamp) public onlyOwner {
         _mint(address(this),totalSupply);
         nftDeadlineTransfer[totalSupply]=timestamp;
-        nftPrice[totalSupply]=price;
+        nftPrice[totalSupply]=0;
         totalSupply+=1;
 
-        emit TicketCreated(totalSupply, price, timestamp);
+        emit TicketCreated(totalSupply, 0, timestamp);
         setApprovalForAll(address(this), true);
        
     }
@@ -60,6 +59,7 @@ contract NFTickets is Ownable,ERC721Royalty {
         require(ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not sell this ticket. Deadline expired");
         nftPrice[tokenID] = amount;
+        transferFrom(msg.sender, address(this), tokenID);
     }
 
 
