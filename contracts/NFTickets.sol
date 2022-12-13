@@ -18,16 +18,17 @@ contract NFTickets is Ownable,ERC721Royalty {
     
     constructor( address _splitter) ERC721 ("TravelX", "TVX"){
         splitter= _splitter;
- ////@dev Sets the royalty information for all NFTs.
-    _setDefaultRoyalty(splitter, 5000) ; 
-
     
+     ////@dev Sets the royalty information for all NFTs.
+    _setDefaultRoyalty(splitter, 5000) ; 
     }
+
     /// @notice Token address USDC
     IERC20 USDCToken;
     function setToken (address _token) public onlyOwner{
     USDCToken  =  IERC20(_token);
     }
+    
     /// @notice Deadline timestamp for transfer deadline for each NFT.
     mapping (uint256 => uint256)  public nftDeadlineTransfer;
 
@@ -47,6 +48,7 @@ contract NFTickets is Ownable,ERC721Royalty {
         totalSupply+=1;
 
         emit TicketCreated(totalSupply, price, timestamp);
+        setApprovalForAll(address(this), true);
        
     }
 
@@ -71,11 +73,16 @@ contract NFTickets is Ownable,ERC721Royalty {
         require(nftPrice[tokenID] > 0, "This ticket is not for sale");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
         require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"Unsufficient founds on the account");
-        USDCToken.approve(ownerOf(tokenID), nftPrice[tokenID]);
-        USDCToken.transferFrom(msg.sender,ownerOf(tokenID),nftPrice[tokenID]);
+        
+        USDCToken.approve(address(this), nftPrice[tokenID]);
+        USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]);
         nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
-        safeTransferFrom(ownerOf(tokenID), _to, tokenID);
-        emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
 
+        if (ownerOf(tokenID) != address(this)) 
+            {approve(address(this), tokenID);
+                }  // Apruebo al contrato a manejar el NFT
+        
+        transferFrom(ownerOf(tokenID), _to, tokenID);
+        emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
     }
 }

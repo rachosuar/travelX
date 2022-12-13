@@ -12,7 +12,7 @@ contract Stablecoin is Ownable, ERC20 {
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return 18;
+        return 2;
     }
 
     function mintTokens (address reciver, uint256 _qty) public onlyOwner {
