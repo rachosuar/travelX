@@ -40,12 +40,12 @@ contract NFTickets is Ownable,ERC721Royalty {
       /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
-    function createTicket(uint256 timestamp) public onlyOwner {
+    function createTicket(uint256 timestamp, uint256 price) public onlyOwner {
         _mint(address(this),totalSupply);
         nftDeadlineTransfer[totalSupply]=timestamp;
-        nftPrice[totalSupply]=100;
+        nftPrice[totalSupply]=price;
 
-        emit TicketCreated(totalSupply, 0, timestamp);
+        emit TicketCreated(totalSupply, price, timestamp);
         //approve(address(this), totalSupply);
         totalSupply+=1;
        
@@ -59,7 +59,7 @@ contract NFTickets is Ownable,ERC721Royalty {
         require(ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
         require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not sell this ticket. Deadline expired");
         nftPrice[tokenID] = amount;
-        //transferFrom(msg.sender, address(this), tokenID);
+       
     }
 
 
@@ -76,8 +76,8 @@ contract NFTickets is Ownable,ERC721Royalty {
         
         
         //USDCToken.approve(address(this), nftPrice[tokenID]);
-        USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]*95/100);
-        USDCToken.transferFrom(msg.sender, contrato splitter,nftPrice[tokenID]*5/100);
+        USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]);
+        //USDCToken.transferFrom(msg.sender, contrato splitter,nftPrice[tokenID]*5/100);
 
         require(_isApprovedOrOwner(_msgSender(), tokenID) || ownerOf(tokenID) == address(this), "ERC721: caller is not token owner or approved");
         _safeTransfer(ownerOf(tokenID), _to, tokenID, "");

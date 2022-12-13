@@ -85,7 +85,8 @@ describe("NFTickets", function () {
     it("Should create an NFT Ticket", async function () {
       const balanceBefore = await ticketsInstance.balanceOf(ticketsAddress);
       const createTicket = await ticketsInstance.createTicket(
-        1671231974
+        1672341981,
+        hre.ethers.utils.parseUnits("1000.0", 2)
       );
       createTicket.wait();
 
@@ -94,8 +95,8 @@ describe("NFTickets", function () {
       const ticketDeadLine = await ticketsInstance.nftDeadlineTransfer(0);
 
       expect(balanceAfter).to.equal(balanceBefore + 1);
-      expect(ticketPrice).to.equal(100);
-      expect(ticketDeadLine).to.equal(1671231974);
+      expect(ticketPrice).to.equal(hre.ethers.utils.parseUnits("1000.0", 2));
+      expect(ticketDeadLine).to.equal(1672341981);
       const ticketOwner = await ticketsInstance.ownerOf(0);
       expect(ticketOwner).to.equal(ticketsAddress);
     });
@@ -106,7 +107,8 @@ describe("NFTickets", function () {
       );
 
       const createTicket = ticketsInstanceForNonOwner.createTicket(
-        1671231974
+        1672341981,
+        hre.ethers.utils.parseUnits("1000.0", 2)
       );
       await expect(createTicket).to.be.revertedWith(
         "Ownable: caller is not the owner"
@@ -114,11 +116,10 @@ describe("NFTickets", function () {
     });
 
     it("Should allow to buy a ticket", async function () {
-      
       const ticketsInstanceForContract = await ticketsInstance.connect(
         ticketsAddress
       );
-      
+
       const ticketInstanceForBuyer = await ticketsInstance.connect(
         sigInstances.buyer
       );
@@ -146,13 +147,10 @@ describe("NFTickets", function () {
       );
       paymentApprove.wait();
 
-      console.log(await ticketsInstance.ownerOf(0))
-      console.log(ticketsInstance.address)
-
       // const transferApprove = await ticketsInstance.approve(sigAddrs.buyer, 0);
       // transferApprove.wait();
 
-      // const addressAprobado = await ticketsInstance.getApproved(0)  
+      // const addressAprobado = await ticketsInstance.getApproved(0)
       // console.log(addressAprobado)
 
       const buyTicket = await ticketInstanceForBuyer.transferNFT(
@@ -181,21 +179,65 @@ describe("NFTickets", function () {
       expect(StablecoinBuyerBalanceAfter).to.equal(
         StablecoinBuyerBalanceBefore.sub(nftPrice)
       );
+
+      expect(TicketsContractBalanceAfter).to.equal(
+        TicketsContractBalanceBefore.sub(1)
+      );
+
+      expect(TicketsBuyerBalanceAfter).to.equal(
+        TicketsBuyerBalanceBefore.add(1)
+      );
+
+      expect(await ticketsInstance.ownerOf(0)).to.equal(sigAddrs.buyer);
+    });
+
+    it("Should set NFT Price to 0 after transfer", async function () {
+      const nftPriceAfterTransfer = await ticketsInstance.nftPrice(0);
+      expect(nftPriceAfterTransfer).to.equal(0);
+    });
+
+    it("Should prevent a nonOwner to set NFT Price", async function () {
+      const ticketsInstanceForNonOwner = await ticketsInstance.connect(
+        sigInstances.nonOwner
+      );
+      const setPriceTx = ticketsInstanceForNonOwner.sellTicket(
+        0,
+        hre.ethers.utils.parseUnits("250", 2)
+      );
+      await expect(setPriceTx).to.be.revertedWith(
+        "You are not the owner of this ticket"
+      );
+    });
+
+    it("Should allow Owner to set NFT Price", async function () {
+      const ticketsInstanceBuyer = await ticketsInstance.connect(
+        sigInstances.buyer
+      );
+      const setPriceTx = await ticketsInstanceBuyer.sellTicket(
+        0,
+        hre.ethers.utils.parseUnits("250", 2)
+      );
+
+      expect(await ticketsInstance.nftPrice(0)).to.equal(
+        hre.ethers.utils.parseUnits("250", 2)
+      );
+    });
+
+    it("Should prevent to buy NFT after Deadline", async function () {
+      await helpers.time.increaseTo(1672356381);
+
+      const ticketsInstanceForNonOwner = await ticketsInstance.connect(
+        sigInstances.nonOwner
+      );
+
+      const buyTicketTx = ticketsInstanceForNonOwner.transferNFT(
+        0,
+        sigAddrs.nonOwner
+      );
+
+      await expect(buyTicketTx).to.be.revertedWith(
+        "You can not buy this ticket. Deadline expired"
+      );
     });
   });
 });
-
-/* function transferNFT(uint256 tokenID, address _to) public {
-        //require(curreny == usdc, "wrong token");
-        require(nftPrice[tokenID] > 0, "This ticket is not for sale");
-        require(block.timestamp <= nftDeadlineTransfer[tokenID], "You can not buy this ticket. Deadline expired");
-        require(USDCToken.balanceOf(msg.sender)>=nftPrice[tokenID],"The amount is not correct");
-        USDCToken.approve(address(this), nftPrice[tokenID]);
-        USDCToken.transfer(ownerOf(tokenID),nftPrice[tokenID]);
-        nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
-        safeTransferFrom(ownerOf(tokenID), _to, tokenID);
-        emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
-
-    }
-       
-    }*/
