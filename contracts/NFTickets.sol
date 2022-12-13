@@ -78,9 +78,6 @@ contract NFTickets is Ownable,ERC721Royalty {
         USDCToken.transferFrom(msg.sender, ownerOf(tokenID),nftPrice[tokenID]);
         nftPrice[tokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
 
-        // if (ownerOf(tokenID) != address(this)) 
-        //     {approve(address(this), tokenID);
-        //         }  // Apruebo al contrato a manejar el NFT
         approve(_to,tokenID);
         transferFrom(ownerOf(tokenID), _to, tokenID);
         emit nftTransfer(ownerOf(tokenID), _to, tokenID, block.timestamp);
