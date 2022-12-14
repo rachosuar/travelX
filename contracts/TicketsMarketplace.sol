@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./NFTickets.sol";
+import "./Splitter.sol";
 
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
@@ -14,13 +15,17 @@ contract TicketsMarketplace is Ownable {
 
     NFTickets nfTickets;
     IERC20 USDCToken;
+    address splitter;
 
 
-    constructor (address _erc20,address _erc721) {
+    constructor (address _erc20,address _erc721, address _splitter) {
         nfTickets = NFTickets(_erc721);
         USDCToken  =  IERC20(_erc20);
+        splitter = address(_splitter);
 
     }
+
+    
 
     function create(uint256 timestamp, uint256 price) public onlyOwner{
         nfTickets.createTicket(timestamp, price);
@@ -44,15 +49,13 @@ contract TicketsMarketplace is Ownable {
     /// @param _to address of the new owner of the NFT (can not be the same address that buys)
     
     function transferNFT(uint256 tokenID, address _to) public {
-        //require(curreny == usdc, "wrong token");
-        require(nfTickets.getPrice(tokenID) > 0, "This ticket is not for sale");
-        require(block.timestamp <= nfTickets.getDeadline(tokenID), "You can not buy this ticket. Deadline expired");
+        require(nfTickets.isOnSale(tokenID),"Ticket is not for sale");
         require(USDCToken.balanceOf(msg.sender)>=nfTickets.getPrice(tokenID),"Unsufficient founds on the account");
-        
+        uint256 nftPrice =nfTickets.getPrice(tokenID);
         
         //USDCToken.approve(address(this), nftPrice[tokenID]);
-        USDCToken.transferFrom(msg.sender, nfTickets.ownerOf(tokenID),nfTickets.getPrice(tokenID)*95/100);
-        //USDCToken.transferFrom(msg.sender, contrato splitter,nftPrice[tokenID]*5/100);
+        USDCToken.transferFrom(msg.sender, nfTickets.ownerOf(tokenID),nftPrice*95/100);
+        USDCToken.transferFrom(msg.sender, splitter,nftPrice*5/100);
 
        // require(_isApprovedOrOwner(_msgSender(), tokenID) || ownerOf(tokenID) == address(this), "ERC721: caller is not token owner or approved");
         nfTickets.safeTransferFrom(nfTickets.ownerOf(tokenID), _to, tokenID, "");

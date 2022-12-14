@@ -2,11 +2,12 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract NFTickets is Ownable, ERC721Royalty {
 
-    //set Airline and TravelX addresses
+    
     address splitter;
 
   
@@ -55,6 +56,12 @@ contract NFTickets is Ownable, ERC721Royalty {
     function getDeadline (uint256 id) public view returns(uint256 deadline){
         return nftDeadlineTransfer[id];
     }
+
+    function isOnSale(uint256 id) public view returns (bool){
+        return nftPrice[id]>0 && nftDeadlineTransfer[id]>block.timestamp;
+    }
+
+    
 
        function _beforeTokenTransfer(
         address from,

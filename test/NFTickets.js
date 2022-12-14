@@ -16,6 +16,9 @@ let stablecoinAddress;
 let nftAddress;
 let nftInstance;
 
+let splitterInstance;
+let splitterAddr;
+
 const sigInstances = {};
 const sigAddrs = {};
 const signerRoles = [
@@ -66,13 +69,25 @@ describe("NFTickets", function () {
       const stablecoinSymbol = await stablecoinInstance.symbol();
       expect(stablecoinSymbol).to.equal("FUSDC");
     });
+    it("Should deploy the splitter contract", async function () {
+      const splitterFactory = await hre.ethers.getContractFactory(
+        "Splitter",
+        sigInstances.deployer
+      );
+      splitterInstance = await splitterFactory.deploy(
+        [sigAddrs.travelX, sigAddrs.airline],
+        [400, 600]
+      );
+      splitterAddr = splitterInstance.address;
+      expect(splitterAddr).to.be.a.properAddress;
+    });
     it("Should deploy NFT contract", async function () {
       const nftFactory = await hre.ethers.getContractFactory(
         "NFTickets",
         sigInstances.deployer
       );
 
-      nftInstance = await nftFactory.deploy(sigAddrs.splitter);
+      nftInstance = await nftFactory.deploy(splitterAddr);
       await nftInstance.deployed();
       nftAddress = nftInstance.address;
 
@@ -88,7 +103,8 @@ describe("NFTickets", function () {
 
       marketplaceInstance = await marketplaceFactory.deploy(
         stablecoinAddress,
-        nftAddress
+        nftAddress,
+        splitterAddr
       );
       await marketplaceInstance.deployed();
 
@@ -150,6 +166,9 @@ describe("NFTickets", function () {
       const StablecoinBuyerBalanceBefore = await stablecoinInstance.balanceOf(
         sigAddrs.buyer
       );
+      const splitterBalanceBefore = await stablecoinInstance.balanceOf(
+        splitterAddr
+      );
       const nftContractBalanceBefore = await nftInstance.balanceOf(
         marketplaceAddress
       );
@@ -178,6 +197,9 @@ describe("NFTickets", function () {
       const StablecoinBuyerBalanceAfter = await stablecoinInstance.balanceOf(
         sigAddrs.buyer
       );
+      const splitterBalanceAfter = await stablecoinInstance.balanceOf(
+        splitterAddr
+      );
       const nftContractBalanceAfter = await nftInstance.balanceOf(
         marketplaceAddress
       );
@@ -186,9 +208,12 @@ describe("NFTickets", function () {
       expect(StablecoinContractBalanceAfter).to.equal(
         StablecoinContractBalanceBefore.add(nftPrice.mul(95).div(100))
       );
+      expect(splitterBalanceBefore).to.equal(
+        splitterBalanceAfter.sub(nftPrice.mul(5).div(100))
+      );
 
       expect(StablecoinBuyerBalanceAfter).to.equal(
-        StablecoinBuyerBalanceBefore.sub(nftPrice.mul(95).div(100))
+        StablecoinBuyerBalanceBefore.sub(nftPrice)
       );
 
       expect(nftContractBalanceAfter).to.equal(nftContractBalanceBefore.sub(1));
@@ -215,6 +240,16 @@ describe("NFTickets", function () {
         "You are not the owner of this ticket"
       );
     });
+    it("Should prevent to transfer NFT if price is set to 0", async function () {
+      const marketplaceInstanceForNonOwner = await marketplaceInstance.connect(
+        sigInstances.nonOwner
+      );
+      const buyTicketTx = marketplaceInstanceForNonOwner.transferNFT(
+        0,
+        sigAddrs.nonOwner
+      );
+      await expect(buyTicketTx).to.be.revertedWith("Ticket is not for sale");
+    });
 
     it("Should allow Owner to set NFT Price", async function () {
       const marketplaceInstanceBuyer = await marketplaceInstance.connect(
@@ -230,6 +265,7 @@ describe("NFTickets", function () {
         hre.ethers.utils.parseUnits("250", 2)
       );
     });
+
     it("Should prevent to buy NFT after Deadline", async function () {
       await helpers.time.increaseTo(1672356381);
       const marketplaceInstanceForNonOwner = await marketplaceInstance.connect(
@@ -239,9 +275,26 @@ describe("NFTickets", function () {
         0,
         sigAddrs.nonOwner
       );
-      await expect(buyTicketTx).to.be.revertedWith(
-        "You can not buy this ticket. Deadline expired"
-      );
+      await expect(buyTicketTx).to.be.revertedWith("Ticket is not for sale");
     });
+  });
+  describe("Splitter", function () {
+    it("Should show pending payments for each account", async function () {
+      let totalSplitter = await stablecoinInstance.balanceOf(splitterAddr);
+      let travelxPending = await splitterInstance.pending(
+        stablecoinAddress,
+        sigAddrs.travelX
+      );
+      let airlinePending = await splitterInstance.pending(
+        stablecoinAddress,
+        sigAddrs.airline
+      );
+
+      expect(totalSplitter).to.equal(travelxPending.add(airlinePending));
+      expect(travelxPending).to.equal(totalSplitter.mul(40).div(100));
+      expect(airlinePending).to.equal(totalSplitter.mul(60).div(100));
+    });
+
+    it("Should deploy the stablecoin contract", async function () {});
   });
 });
