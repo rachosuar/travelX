@@ -5,12 +5,16 @@ const {
   weeks,
   days,
 } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration");
+const { ethers } = require("hardhat");
 
-let ticketsInstance;
-let ticketsAddress;
+let marketplaceInstance;
+let marketplaceAddress;
 
 let stablecoinInstance;
 let stablecoinAddress;
+
+let nftAddress;
+let nftInstance;
 
 const sigInstances = {};
 const sigAddrs = {};
@@ -62,51 +66,69 @@ describe("NFTickets", function () {
       const stablecoinSymbol = await stablecoinInstance.symbol();
       expect(stablecoinSymbol).to.equal("FUSDC");
     });
-
     it("Should deploy NFT contract", async function () {
-      const ticketsFactory = await hre.ethers.getContractFactory(
+      const nftFactory = await hre.ethers.getContractFactory(
         "NFTickets",
         sigInstances.deployer
       );
 
-      ticketsInstance = await ticketsFactory.deploy(sigAddrs.deployer);
-      await ticketsInstance.deployed();
+      nftInstance = await nftFactory.deploy(sigAddrs.splitter);
+      await nftInstance.deployed();
+      nftAddress = nftInstance.address;
 
-      ticketsAddress = ticketsInstance.address;
+      let nftOwner = await nftInstance.owner();
+      expect(nftOwner).to.equal(sigAddrs.deployer);
+    });
 
-      //set stablecoin token
-      const setStablecoin = await ticketsInstance.setToken(stablecoinAddress);
-      setStablecoin.wait();
+    it("Should deploy marketplace contract", async function () {
+      const marketplaceFactory = await hre.ethers.getContractFactory(
+        "TicketsMarketplace",
+        sigInstances.deployer
+      );
 
-      const stablecoinOwner = await stablecoinInstance.owner();
-      expect(stablecoinOwner).to.equal(sigAddrs.deployer);
+      marketplaceInstance = await marketplaceFactory.deploy(
+        stablecoinAddress,
+        nftAddress
+      );
+      await marketplaceInstance.deployed();
+
+      marketplaceAddress = marketplaceInstance.address;
+
+      const marketplaceOwner = await marketplaceInstance.owner();
+      expect(marketplaceOwner).to.equal(sigAddrs.deployer);
+    });
+    it("Should transfer ownership of NFTickets to Marketplace contract", async function () {
+      const ownershipChange = await nftInstance.transferOwnership(
+        marketplaceAddress
+      );
+      ownershipChange.wait();
+      nftOwner = await nftInstance.owner();
+      expect(nftOwner).to.equal(marketplaceAddress);
     });
 
     it("Should create an NFT Ticket", async function () {
-      const balanceBefore = await ticketsInstance.balanceOf(ticketsAddress);
-      const createTicket = await ticketsInstance.createTicket(
+      const balanceBefore = await nftInstance.balanceOf(marketplaceAddress);
+
+      const createTicket = await marketplaceInstance.create(
         1672341981,
         hre.ethers.utils.parseUnits("1000.0", 2)
       );
       createTicket.wait();
-
-      const balanceAfter = await ticketsInstance.balanceOf(ticketsAddress);
-      const ticketPrice = await ticketsInstance.nftPrice(0);
-      const ticketDeadLine = await ticketsInstance.nftDeadlineTransfer(0);
-
+      const balanceAfter = await nftInstance.balanceOf(marketplaceAddress);
+      const ticketPrice = await nftInstance.nftPrice(0);
+      const ticketDeadLine = await nftInstance.nftDeadlineTransfer(0);
       expect(balanceAfter).to.equal(balanceBefore + 1);
       expect(ticketPrice).to.equal(hre.ethers.utils.parseUnits("1000.0", 2));
       expect(ticketDeadLine).to.equal(1672341981);
-      const ticketOwner = await ticketsInstance.ownerOf(0);
-      expect(ticketOwner).to.equal(ticketsAddress);
+      const ticketOwner = await nftInstance.ownerOf(0);
+      expect(ticketOwner).to.equal(marketplaceAddress);
     });
 
     it("Should prevent create an NFT if not the owner", async function () {
-      const ticketsInstanceForNonOwner = await ticketsInstance.connect(
+      const marketplaceInstanceForNonOwner = marketplaceInstance.connect(
         sigInstances.nonOwner
       );
-
-      const createTicket = ticketsInstanceForNonOwner.createTicket(
+      const createTicket = marketplaceInstanceForNonOwner.create(
         1672341981,
         hre.ethers.utils.parseUnits("1000.0", 2)
       );
@@ -116,91 +138,76 @@ describe("NFTickets", function () {
     });
 
     it("Should allow to buy a ticket", async function () {
-      const ticketsInstanceForContract = await ticketsInstance.connect(
-        ticketsAddress
-      );
-
-      const ticketInstanceForBuyer = await ticketsInstance.connect(
+      const marketplaceInstanceForBuyer = await marketplaceInstance.connect(
         sigInstances.buyer
       );
       const BuyerStablecoinInstance = await stablecoinInstance.connect(
         sigInstances.buyer
       );
-
-      const nftPrice = await ticketsInstance.nftPrice(0);
-
+      const nftPrice = await nftInstance.getPrice(0);
       const StablecoinContractBalanceBefore =
-        await stablecoinInstance.balanceOf(ticketsAddress);
+        await stablecoinInstance.balanceOf(marketplaceAddress);
       const StablecoinBuyerBalanceBefore = await stablecoinInstance.balanceOf(
         sigAddrs.buyer
       );
-      const TicketsContractBalanceBefore = await ticketsInstance.balanceOf(
-        ticketsAddress
+      const nftContractBalanceBefore = await nftInstance.balanceOf(
+        marketplaceAddress
       );
-      const TicketsBuyerBalanceBefore = await ticketsInstance.balanceOf(
-        sigAddrs.buyer
-      );
-
+      const nftBuyerBalanceBefore = await nftInstance.balanceOf(sigAddrs.buyer);
       const paymentApprove = await BuyerStablecoinInstance.approve(
-        ticketsAddress,
+        marketplaceAddress,
         nftPrice
       );
       paymentApprove.wait();
 
-      // const transferApprove = await ticketsInstance.approve(sigAddrs.buyer, 0);
+      // const transferApprove = await marketplaceInstance.approve(sigAddrs.buyer, 0);
       // transferApprove.wait();
 
-      // const addressAprobado = await ticketsInstance.getApproved(0)
+      // const addressAprobado = await marketplaceInstance.getApproved(0)
       // console.log(addressAprobado)
 
-      const buyTicket = await ticketInstanceForBuyer.transferNFT(
+      const buyTicket = await marketplaceInstanceForBuyer.transferNFT(
         0,
         sigAddrs.buyer
       );
       buyTicket.wait();
 
       const StablecoinContractBalanceAfter = await stablecoinInstance.balanceOf(
-        ticketsAddress
+        marketplaceAddress
       );
       const StablecoinBuyerBalanceAfter = await stablecoinInstance.balanceOf(
         sigAddrs.buyer
       );
-      const TicketsContractBalanceAfter = await ticketsInstance.balanceOf(
-        ticketsAddress
+      const nftContractBalanceAfter = await nftInstance.balanceOf(
+        marketplaceAddress
       );
-      const TicketsBuyerBalanceAfter = await ticketsInstance.balanceOf(
-        sigAddrs.buyer
-      );
+      const nftBuyerBalanceAfter = await nftInstance.balanceOf(sigAddrs.buyer);
 
       expect(StablecoinContractBalanceAfter).to.equal(
-        StablecoinContractBalanceBefore.add(nftPrice)
+        StablecoinContractBalanceBefore.add(nftPrice.mul(95).div(100))
       );
 
       expect(StablecoinBuyerBalanceAfter).to.equal(
-        StablecoinBuyerBalanceBefore.sub(nftPrice)
+        StablecoinBuyerBalanceBefore.sub(nftPrice.mul(95).div(100))
       );
 
-      expect(TicketsContractBalanceAfter).to.equal(
-        TicketsContractBalanceBefore.sub(1)
-      );
+      expect(nftContractBalanceAfter).to.equal(nftContractBalanceBefore.sub(1));
 
-      expect(TicketsBuyerBalanceAfter).to.equal(
-        TicketsBuyerBalanceBefore.add(1)
-      );
+      expect(nftBuyerBalanceAfter).to.equal(nftBuyerBalanceBefore.add(1));
 
-      expect(await ticketsInstance.ownerOf(0)).to.equal(sigAddrs.buyer);
+      expect(await nftInstance.ownerOf(0)).to.equal(sigAddrs.buyer);
     });
 
     it("Should set NFT Price to 0 after transfer", async function () {
-      const nftPriceAfterTransfer = await ticketsInstance.nftPrice(0);
+      const nftPriceAfterTransfer = await nftInstance.nftPrice(0);
       expect(nftPriceAfterTransfer).to.equal(0);
     });
 
     it("Should prevent a nonOwner to set NFT Price", async function () {
-      const ticketsInstanceForNonOwner = await ticketsInstance.connect(
+      const marketplaceInstanceForNonOwner = await marketplaceInstance.connect(
         sigInstances.nonOwner
       );
-      const setPriceTx = ticketsInstanceForNonOwner.sellTicket(
+      const setPriceTx = marketplaceInstanceForNonOwner.sellTicket(
         0,
         hre.ethers.utils.parseUnits("250", 2)
       );
@@ -210,31 +217,28 @@ describe("NFTickets", function () {
     });
 
     it("Should allow Owner to set NFT Price", async function () {
-      const ticketsInstanceBuyer = await ticketsInstance.connect(
+      const marketplaceInstanceBuyer = await marketplaceInstance.connect(
         sigInstances.buyer
       );
-      const setPriceTx = await ticketsInstanceBuyer.sellTicket(
+      const setPriceTx = await marketplaceInstanceBuyer.sellTicket(
         0,
         hre.ethers.utils.parseUnits("250", 2)
       );
+      setPriceTx.wait();
 
-      expect(await ticketsInstance.nftPrice(0)).to.equal(
+      expect(await nftInstance.nftPrice(0)).to.equal(
         hre.ethers.utils.parseUnits("250", 2)
       );
     });
-
     it("Should prevent to buy NFT after Deadline", async function () {
       await helpers.time.increaseTo(1672356381);
-
-      const ticketsInstanceForNonOwner = await ticketsInstance.connect(
+      const marketplaceInstanceForNonOwner = await marketplaceInstance.connect(
         sigInstances.nonOwner
       );
-
-      const buyTicketTx = ticketsInstanceForNonOwner.transferNFT(
+      const buyTicketTx = marketplaceInstanceForNonOwner.transferNFT(
         0,
         sigAddrs.nonOwner
       );
-
       await expect(buyTicketTx).to.be.revertedWith(
         "You can not buy this ticket. Deadline expired"
       );
