@@ -117,7 +117,7 @@ async function main() {
   console.log(
     "---------------------------------CREATE TICKETS (as Marketplace owner)------------------------------------------"
   );
-  console.log("Marketplac new tickets creation...");
+  console.log("Marketplace new tickets creation...");
   //Generate tickets
   let ticketQty = await rlInterface.questionAsync(
     "How many tickets do you want to create? (3 Max) :  "

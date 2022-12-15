@@ -33,9 +33,11 @@ contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
 
    
 
-    /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
+    /// @notice create NFTTickets when called by owner
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
+    /// @param price price set for the NFT
+    /// @param _tokenURI URI for ticket metadata IPFS
     function createTicket(uint256 timestamp,uint256 price, string memory _tokenURI) external onlyOwner {
         _mint(msg.sender, totalSupply);
         _setTokenURI(totalSupply, _tokenURI);
@@ -54,12 +56,14 @@ contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
         bytes memory data
     ) public virtual override {
        
-        _safeTransfer(from, to, tokenId, data);
+     _safeTransfer(from, to, tokenId, data);
     }
-
      function _baseURI() internal view virtual override returns (string memory) {
         return "/ipfs/QmbYSMqKG4FEnvMpNVxxnNKq4UqnFz3WKgjBeQ27v75U3v/";
     }
+
+    /// GETTERS AND SETTERS
+
     function setPrice(uint256 id, uint256 amount) public onlyOwner {
         require(nftDeadlineTransfer[id]>0,"Ticket doesn't exist");
         require (ownerOf(id)== tx.origin);

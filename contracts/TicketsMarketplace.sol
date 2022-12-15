@@ -25,12 +25,14 @@ contract TicketsMarketplace is Ownable {
 
     }
 
-    
-
+    /// @notice call ERC721 to create NFTickets
+    /// @dev RachoSuar - TinchoMon
+    /// @param timestamp ticket deadline for transfers
+    /// @param _price price set for the NFT
+    /// @param _tokenURI URI for ticket metadata IPFS
     function create(uint256 timestamp, uint256 _price,string memory _tokenURI) public onlyOwner{
         nfTickets.createTicket(timestamp,_price, _tokenURI);
     }
-   
     /// @notice set price for selling NFT Ticket - If price is 0 is not for sale
     /// @dev RachoSuar - TinchoMon
     /// @param tokenID id of the NFT Ticket
@@ -39,10 +41,7 @@ contract TicketsMarketplace is Ownable {
         require(nfTickets.ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
         require(block.timestamp <= nfTickets.getDeadline(tokenID), "You can not sell this ticket. Deadline expired");
         nfTickets.setPrice(tokenID,amount) ;
-    
     }
-
-
     /// @notice Transfer NFT Ticket
     /// @dev RachoSuar - TinchoMon
     /// @param tokenID id of the NFT Ticket
@@ -52,11 +51,9 @@ contract TicketsMarketplace is Ownable {
         require(nfTickets.isOnSale(tokenID),"Ticket is not for sale");
         require(USDCToken.balanceOf(msg.sender)>=nfTickets.getPrice(tokenID),"Unsufficient founds on the account");
         uint256 nftPrice =nfTickets.getPrice(tokenID);
-        
         //USDCToken.approve(address(this), nftPrice[tokenID]);
         USDCToken.transferFrom(msg.sender, nfTickets.ownerOf(tokenID),nftPrice*95/100);
         USDCToken.transferFrom(msg.sender, splitter,nftPrice*5/100);
-
        // require(_isApprovedOrOwner(_msgSender(), tokenID) || ownerOf(tokenID) == address(this), "ERC721: caller is not token owner or approved");
         nfTickets.safeTransferFrom(nfTickets.ownerOf(tokenID), _to, tokenID, "");
         emit nftTransfer(nfTickets.ownerOf(tokenID), _to, tokenID, block.timestamp);
