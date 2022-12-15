@@ -27,8 +27,8 @@ contract TicketsMarketplace is Ownable {
 
     
 
-    function create(uint256 timestamp, uint256 price) public onlyOwner{
-        nfTickets.createTicket(timestamp, price);
+    function create(uint256 timestamp, string memory _tokenURI) public onlyOwner{
+        nfTickets.createTicket(timestamp, _tokenURI);
     }
    
     /// @notice set price for selling NFT Ticket - If price is 0 is not for sale

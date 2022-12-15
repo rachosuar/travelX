@@ -1,0 +1,17 @@
+{
+  "Type": "Roundtrip",
+  "from": {
+    "ATTA": "BUE",
+    "city": "Buenos Aires",
+    "DOF": 1672714856,
+    "TOD": "10:00 UTC"
+  },
+  "to": {
+    "ATTA": "CRV",
+    "city": "Comodoro Rivadavia",
+    "ETA": "12:15 UTC",
+    "DOB": 1674183656,
+    "TOD": "09:00 UTC"
+  },
+  "image": "ipfs/QmfJWrUVQSDLwN5gk5FWwmm14Efk69vRWmd51ebP5TSHRu"
+}

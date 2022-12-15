@@ -1,0 +1,17 @@
+{
+  "type": "Roundtrip",
+  "from": {
+    "ATTA": "COR",
+    "city": "Cordoba",
+    "DOF": 1672282856,
+    "TOD": "09:00 UTC"
+  },
+  "to": {
+    "ATTA": "BUE",
+    "city": "Buenos Aires",
+    "ETA": "10:15 UTC",
+    "DOB": 1672628456,
+    "TOD": "09:00 UTC"
+  },
+  "image": "ipfs/QmQf7sEAZtzNncV976Yf8ebJa4r553MQx5mT75NSR4rX4e"
+}

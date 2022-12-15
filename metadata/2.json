@@ -1,0 +1,17 @@
+{
+  "Type": "Roundtrip",
+  "from": {
+    "ATTA": "SAL",
+    "city": "Salta",
+    "DOF": 1672628456,
+    "TOD": "10:00 UTC"
+  },
+  "to": {
+    "ATTA": "BUE",
+    "city": "Buenos Aires",
+    "ETA": "12:15 UTC",
+    "DOB": 1673751656,
+    "TOD": "09:00 UTC"
+  },
+  "image": "/ipfs/QmSbbrxpgVHmuwcHg9gJwRLrAMHjrTS4sUtuZfVenMVew3"
+}

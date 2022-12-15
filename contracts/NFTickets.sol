@@ -2,10 +2,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Royalty.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract NFTickets is Ownable, ERC721Royalty {
+contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
 
     
     address splitter;
@@ -18,7 +18,11 @@ contract NFTickets is Ownable, ERC721Royalty {
         ////@dev Sets the royalty information for all NFTs.
         _setDefaultRoyalty(splitter, 5000);
     }
-     event TicketCreated(uint256 _id, uint256 price, uint256 timestamp);
+     event TicketCreated(uint256 _id,  uint256 timestamp);
+     
+
+     mapping(uint256 => string) private _tokenURIs;
+
       /// @notice Counter of NFT Tickets minted
     uint256 totalSupply = 0;
 
@@ -33,13 +37,13 @@ contract NFTickets is Ownable, ERC721Royalty {
     /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
-    /// @param price sets initial price for the ticket
-    function createTicket(uint256 timestamp, uint256 price) external onlyOwner {
+    function createTicket(uint256 timestamp, string memory _tokenURI) external onlyOwner {
         _mint(msg.sender, totalSupply);
+        _setTokenURI(totalSupply, _tokenURI);
         nftDeadlineTransfer[totalSupply] = timestamp;
-        nftPrice[totalSupply] = price;
+        nftPrice[totalSupply] = 0;
 
-        emit TicketCreated(totalSupply, price, timestamp);
+        emit TicketCreated(totalSupply, timestamp);
         //approve(address(this), totalSupply);
         totalSupply += 1;
     }
@@ -72,5 +76,40 @@ contract NFTickets is Ownable, ERC721Royalty {
         require(batchSize == 1, "Incorrect batch size");
         NFTickets.nftPrice[firstTokenID] = 0; // Vuelvo el precio a 0 para que no quede en venta
         super._beforeTokenTransfer(from,to,firstTokenID, batchSize);
+    }
+
+     function _burn(uint256 tokenId) internal virtual override(ERC721URIStorage,ERC721Royalty) {
+        super._burn(tokenId);
+
+        if (bytes(_tokenURIs[tokenId]).length != 0) {
+            delete _tokenURIs[tokenId];
+        }
+    }
+
+     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721,ERC721Royalty) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+     // Optional mapping for token URIs
+   
+
+    /**
+     * @dev See {IERC721Metadata-tokenURI}.
+     */
+    function tokenURI(uint256 tokenId) public view virtual override (ERC721,ERC721URIStorage) returns (string memory) {
+        _requireMinted(tokenId);
+
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = _baseURI();
+
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return string(abi.encodePacked(base, _tokenURI));
+        }
+
+        return super.tokenURI(tokenId);
     }
 }
