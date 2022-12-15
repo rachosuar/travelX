@@ -6,8 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
-
-    
+     
     address splitter;
 
   
@@ -18,13 +17,13 @@ contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
         ////@dev Sets the royalty information for all NFTs.
         _setDefaultRoyalty(splitter, 5000);
     }
-     event TicketCreated(uint256 _id,  uint256 timestamp);
+     event TicketCreated(uint256 _id, uint256 _price, uint256 timestamp);
      
 
      mapping(uint256 => string) private _tokenURIs;
 
       /// @notice Counter of NFT Tickets minted
-    uint256 totalSupply = 0;
+    uint256 public totalSupply = 1;
 
     /// @notice Deadline timestamp for transfer deadline for each NFT.
     mapping(uint256 => uint256) public nftDeadlineTransfer;
@@ -37,18 +36,31 @@ contract NFTickets is Ownable, ERC721Royalty, ERC721URIStorage {
     /// @notice create NFTTickets initiali as a Mock, to be confirmed by travelX
     /// @dev RachoSuar - TinchoMon
     /// @param timestamp timestamp of deadline for trading
-    function createTicket(uint256 timestamp, string memory _tokenURI) external onlyOwner {
+    function createTicket(uint256 timestamp,uint256 price, string memory _tokenURI) external onlyOwner {
         _mint(msg.sender, totalSupply);
         _setTokenURI(totalSupply, _tokenURI);
         nftDeadlineTransfer[totalSupply] = timestamp;
-        nftPrice[totalSupply] = 0;
+        nftPrice[totalSupply] = price;
 
-        emit TicketCreated(totalSupply, timestamp);
+        emit TicketCreated(totalSupply,price, timestamp);
         //approve(address(this), totalSupply);
         totalSupply += 1;
     }
 
-    function setPrice(uint256 id, uint256 amount) public  {
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public virtual override {
+       
+        _safeTransfer(from, to, tokenId, data);
+    }
+
+     function _baseURI() internal view virtual override returns (string memory) {
+        return "/ipfs/QmbYSMqKG4FEnvMpNVxxnNKq4UqnFz3WKgjBeQ27v75U3v/";
+    }
+    function setPrice(uint256 id, uint256 amount) public onlyOwner {
         require(nftDeadlineTransfer[id]>0,"Ticket doesn't exist");
         require (ownerOf(id)== tx.origin);
         nftPrice[id]=amount;

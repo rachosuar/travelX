@@ -18,7 +18,7 @@ contract TicketsMarketplace is Ownable {
     address splitter;
 
 
-    constructor (address _erc20,address _erc721, address _splitter) {
+    constructor (address _erc20, address _erc721, address _splitter) {
         nfTickets = NFTickets(_erc721);
         USDCToken  =  IERC20(_erc20);
         splitter = address(_splitter);
@@ -27,8 +27,8 @@ contract TicketsMarketplace is Ownable {
 
     
 
-    function create(uint256 timestamp, string memory _tokenURI) public onlyOwner{
-        nfTickets.createTicket(timestamp, _tokenURI);
+    function create(uint256 timestamp, uint256 _price,string memory _tokenURI) public onlyOwner{
+        nfTickets.createTicket(timestamp,_price, _tokenURI);
     }
    
     /// @notice set price for selling NFT Ticket - If price is 0 is not for sale
@@ -39,7 +39,7 @@ contract TicketsMarketplace is Ownable {
         require(nfTickets.ownerOf(tokenID) == msg.sender, "You are not the owner of this ticket");
         require(block.timestamp <= nfTickets.getDeadline(tokenID), "You can not sell this ticket. Deadline expired");
         nfTickets.setPrice(tokenID,amount) ;
-       
+    
     }
 
 

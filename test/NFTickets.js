@@ -124,10 +124,11 @@ describe("NFTickets", function () {
 
     it("Should create an NFT Ticket", async function () {
       const balanceBefore = await nftInstance.balanceOf(marketplaceAddress);
-
+      let tokenId = nftInstance.totalSupply;
       const createTicket = await marketplaceInstance.create(
         1672341981,
-        hre.ethers.utils.parseUnits("1000.0", 2)
+        hre.ethers.utils.parseUnits("1000.0", 2),
+        tokenId
       );
       createTicket.wait();
       const balanceAfter = await nftInstance.balanceOf(marketplaceAddress);
@@ -144,9 +145,11 @@ describe("NFTickets", function () {
       const marketplaceInstanceForNonOwner = marketplaceInstance.connect(
         sigInstances.nonOwner
       );
+      tokenId = nftInstance.totalSupply;
       const createTicket = marketplaceInstanceForNonOwner.create(
         1672341981,
-        hre.ethers.utils.parseUnits("1000.0", 2)
+        hre.ethers.utils.parseUnits("1000.0", 2),
+        tokenId
       );
       await expect(createTicket).to.be.revertedWith(
         "Ownable: caller is not the owner"

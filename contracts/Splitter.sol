@@ -25,5 +25,7 @@ contract Splitter is PaymentSplitter{
         
         return total;
     }
-  
+    function withdraw(IERC20 token,address payee) public  {
+        release( token, payee);
+    }
 }
