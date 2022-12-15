@@ -11,6 +11,13 @@ const { ethers } = require("hardhat");
 //   input: process.stdin,
 //   output: process.stdout,
 // });
+const readlinePromise = require("readline-promise").default;
+const rlInterface = readlinePromise.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: true,
+});
+let nftticketsAddress;
 
 async function main() {
   // Setup accounts
@@ -25,9 +32,12 @@ async function main() {
   );
   await splitterInstance.deployed();
   const splitterAddr = splitterInstance.address;
+  console.log(
+    "-----------------------------------DEPLOYING SPLITTER (as Deployer)-----------------------------------------------"
+  );
 
-  console.log(`Spliter Contract deployed at: ${splitterAddr}`);
-  console.log(`Deploying stablecoin\n`);
+  console.log(`Spliter Contract deployed at: ${splitterAddr} ✅`);
+  console.log(`Deploying stablecoin...`);
 
   // Deploy Stablecoin
   const stablecoinFactory = await ethers.getContractFactory(
@@ -40,7 +50,11 @@ async function main() {
   await stablecoinInstance.deployed();
   const stablecoinAddress = stablecoinInstance.address;
 
-  console.log(`Stablecoin Contract deployed at: ${stablecoinAddress}`);
+  console.log(
+    "---------------------------------DEPLOYING STABLECOIN (as Deployer)------------------------------------------------"
+  );
+
+  console.log(`Stablecoin Contract deployed at: ${stablecoinAddress} ✅`);
   console.log(`Sending stablecoin to addresses..`);
 
   // Give stablecoin to buyers to operate
@@ -57,14 +71,16 @@ async function main() {
   console.log(
     `Buyer 1 received ${await stablecoinInstance.balanceOf(
       buyer1.address
-    )} ${await stablecoinInstance.symbol()}`
+    )} ${await stablecoinInstance.symbol()} 🤑`
   );
   console.log(
     `Buyer 2 received ${await stablecoinInstance.balanceOf(
       buyer2.address
-    )} ${await stablecoinInstance.symbol()}`
+    )} ${await stablecoinInstance.symbol()} 🤑`
   );
-
+  console.log(
+    "---------------------------------DEPLOYING NFTickets (as Deployer)------------------------------------------------"
+  );
   // Deploy NFTickets
   const nfticketsFactory = await ethers.getContractFactory(
     "NFTickets",
@@ -74,8 +90,10 @@ async function main() {
   await nftticketsInstance.deployed();
   const nftticketsAddress = nftticketsInstance.address;
 
-  console.log(`NFTickets Contract deployed at: ${nftticketsAddress}`);
-
+  console.log(`NFTickets Contract deployed at: ${nftticketsAddress} ✅`);
+  console.log(
+    "---------------------------------DEPLOYING MARKETPLACE (as Deployer)----------------------------------------------"
+  );
   // Deploy Marketplace
   const marketplaceFactory = await ethers.getContractFactory(
     "TicketsMarketplace",
@@ -94,31 +112,57 @@ async function main() {
     marketplaceAddress
   );
   changeOwnership.wait();
-  console.log(`Marketplace Contract deployed at: ${marketplaceAddress}`);
+  console.log(`Marketplace Contract deployed at: ${marketplaceAddress} ✅`);
   console.log(`${await nftticketsInstance.owner()} is the NFT contract owner`);
+  console.log(
+    "---------------------------------CREATE TICKETS (as Marketplace owner)------------------------------------------"
+  );
+  console.log("Marketplac new tickets creation...");
   //Generate tickets
-  console.log("Marketplace generate new tickets...");
-  let tokenID = (await nftticketsInstance.totalSupply()).toNumber();
+  let ticketQty = await rlInterface.questionAsync(
+    "How many tickets do you want to create? (3 Max) :  "
+  );
+  let ticketCreated = 0;
+  while (ticketCreated < ticketQty) {
+    let tokenID = (await nftticketsInstance.totalSupply()).toNumber();
 
-  const createTicketTx = await marketplaceInstance.create(
-    1672341981,
-    hre.ethers.utils.parseUnits("10.0", 2),
-    tokenID
-  );
-  createTicketTx.wait();
-  console.log(
-    `NFTicket number ${tokenID} was created, and you can check it details on https://gateway.pinata.cloud/${await nftticketsInstance.tokenURI(
+    let tokenPrice = await rlInterface.questionAsync(
+      `What price should the ticket ${ticketCreated + 1} have? :   `
+    );
+    let ticketDOF = await rlInterface.questionAsync(
+      "Which will be the ticket deadline for transfer?  (yyyy/mm/dd) :  "
+    );
+    const dateStr1 = ticketDOF;
+    const date1 = new Date(dateStr1);
+    const timestamp = Math.floor(date1.getTime() / 1000);
+
+    const createTicketTx = await marketplaceInstance.create(
+      timestamp,
+      hre.ethers.utils.parseUnits(`${tokenPrice}.0`, 2),
       tokenID
-    )}.json`
-  );
+    );
+    createTicketTx.wait();
+    console.log(
+      `NFTicket number ${tokenID} was created 🛫, and you can check details on  
+       🌎https://gateway.pinata.cloud${await nftticketsInstance.tokenURI(
+         tokenID
+       )}.json 🌏`
+    );
+    ticketCreated++;
+  }
   console.log(
-    "-----------------------------------------------------------------------------------------------"
+    "-------------------------------------------BUY A TICKET (as Buyer 1)-------------------------------------------------"
   );
   //Buy a ticket
+  let ticketSelected = Number(
+    await rlInterface.questionAsync(
+      " 🎫 Which ticket do you want to buy? (ticket ID) : "
+    )
+  );
   const marketplaceInstanceforBuyer = marketplaceInstance.connect(buyer1);
   const stablecoinInstanceforBuyer = stablecoinInstance.connect(buyer1);
 
-  let nftPrice = await nftticketsInstance.getPrice(1);
+  let nftPrice = await nftticketsInstance.getPrice(ticketSelected);
   //Approve marketplace to take stablecoins from buyer wallet
   let approval = await stablecoinInstanceforBuyer.approve(
     marketplaceAddress,
@@ -126,38 +170,46 @@ async function main() {
   );
   approval.wait();
   const transferTx = await marketplaceInstanceforBuyer.transferNFT(
-    1,
+    ticketSelected,
     buyer1.address
   );
   transferTx.wait();
   console.log(
-    `Transaction successful, ${await nftticketsInstance.ownerOf(
-      1
+    `Transaction successful ✅, ${await nftticketsInstance.ownerOf(
+      ticketSelected
     )} is the new owner`
   );
   console.log(
     `NFT price set to ${await nftticketsInstance.getPrice(
-      1
+      ticketSelected
     )}, It's not for sale anymore`
   );
   // Buyer 1 puts ticket on sale
   console.log(
-    `Does ticket number ${tokenID} is for sale?, ${await nftticketsInstance.isOnSale(
-      tokenID
-    )}`
+    `Is ticket number ${ticketSelected}  for sale?, ❌  ${await nftticketsInstance.isOnSale(
+      ticketSelected
+    )}  ❌  `
+  );
+  let newPrice = Number(
+    await rlInterface.questionAsync(
+      `Which will be the new price for ticket ${ticketSelected}?  : `
+    )
   );
   const setForSale = await marketplaceInstanceforBuyer.sellTicket(
-    1,
-    hre.ethers.utils.parseUnits("20.0", 2)
+    ticketSelected,
+    hre.ethers.utils.parseUnits(`${newPrice}.0`, 2)
   );
   setForSale.wait();
   console.log(
-    `Does ticket number ${tokenID} is for sale?, ${await nftticketsInstance.isOnSale(
-      tokenID
-    )} and it price is ${await nftticketsInstance.getPrice(tokenID)}`
+    `Is ticket number ${ticketSelected}  for sale?, ${await nftticketsInstance.isOnSale(
+      ticketSelected
+    )} and it price is ${
+      (await nftticketsInstance.getPrice(ticketSelected)) / 100
+    }`
   );
+
   console.log(
-    "-----------------------------------------------------------------------------------------------"
+    "---------------------------------------BUYER RE-SELL TICKET (as Buyer 2)---------------------------------------"
   );
   // Buyer 2 buys ticket to buyer 1
   const marketplaceInstanceforBuyer2 = marketplaceInstance.connect(buyer2);
@@ -186,21 +238,18 @@ async function main() {
     )}, It's not for sale anymore`
   );
   console.log(
-    "-----------------------------------------------------------------------------------------------"
+    "---------------------------------CHECK FEE DEPOSIT(as TravelX or Airline)-------------------------------------------"
   );
   //Check if fees are deposited
-  const splitterBalance = await stablecoinInstance.balanceOf(splitterAddr);
+  const splitterBalance =
+    (await stablecoinInstance.balanceOf(splitterAddr)) / 100;
   console.log(
-    `After transacctions there are ${splitterBalance} ${await stablecoinInstance.symbol()} payed by buyer as fees `
+    `After transacctions there are ${splitterBalance} ${await stablecoinInstance.symbol()} payed by buyers as fees 💰`
   );
-  const balanceTravelX = await splitterInstance.pending(
-    stablecoinAddress,
-    travelX.address
-  );
-  const balanceAirline = await splitterInstance.pending(
-    stablecoinAddress,
-    airline.address
-  );
+  const balanceTravelX =
+    (await splitterInstance.pending(stablecoinAddress, travelX.address)) / 100;
+  const balanceAirline =
+    (await splitterInstance.pending(stablecoinAddress, airline.address)) / 100;
 
   console.log(
     `TravelX pending withdrawal are ${balanceTravelX} ${await stablecoinInstance.symbol()}`
@@ -208,7 +257,9 @@ async function main() {
   console.log(
     `Airline pending withdrawal are ${balanceAirline} ${await stablecoinInstance.symbol()}`
   );
-
+  console.log(
+    "---------------------------------CHECK WITHDRAWALS (as TravelX or Airline) ------------------------------------"
+  );
   // TravelX can withdrawal founds
   const splitterInstanceforTravelX = await splitterInstance.connect(travelX);
   let withdrawal = await splitterInstanceforTravelX.withdraw(
@@ -218,12 +269,18 @@ async function main() {
   withdrawal.wait();
 
   console.log(
-    `TravelX account has withdrawal ${await stablecoinInstance.balanceOf(
-      travelX.address
-    )} ${await stablecoinInstance.symbol()} so long`
+    `TravelX account has withdrawn ${
+      (await stablecoinInstance.balanceOf(travelX.address)) / 100
+    } ${await stablecoinInstance.symbol()} so long`
   );
 
-  console.log(`Finished.`);
+  console.log(`Thank you for your time! Have a safe flight. 👩🏻‍✈️ `);
+  console.log(
+    "-------------------------------------------------------------------------------------------------------------------"
+  );
+  console.log(
+    "------------------------------------------🚀  EWOL ACADEMY  🚀 ----------------------------------------------------"
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

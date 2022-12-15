@@ -124,7 +124,8 @@ describe("NFTickets", function () {
 
     it("Should create an NFT Ticket", async function () {
       const balanceBefore = await nftInstance.balanceOf(marketplaceAddress);
-      let tokenId = nftInstance.totalSupply;
+      let tokenId = Number(await nftInstance.totalSupply());
+
       const createTicket = await marketplaceInstance.create(
         1672341981,
         hre.ethers.utils.parseUnits("1000.0", 2),
@@ -132,12 +133,12 @@ describe("NFTickets", function () {
       );
       createTicket.wait();
       const balanceAfter = await nftInstance.balanceOf(marketplaceAddress);
-      const ticketPrice = await nftInstance.nftPrice(0);
-      const ticketDeadLine = await nftInstance.nftDeadlineTransfer(0);
+      const ticketPrice = await nftInstance.nftPrice(tokenId);
+      const ticketDeadLine = await nftInstance.nftDeadlineTransfer(tokenId);
       expect(balanceAfter).to.equal(balanceBefore + 1);
       expect(ticketPrice).to.equal(hre.ethers.utils.parseUnits("1000.0", 2));
       expect(ticketDeadLine).to.equal(1672341981);
-      const ticketOwner = await nftInstance.ownerOf(0);
+      const ticketOwner = await nftInstance.ownerOf(tokenId);
       expect(ticketOwner).to.equal(marketplaceAddress);
     });
 
@@ -163,7 +164,7 @@ describe("NFTickets", function () {
       const BuyerStablecoinInstance = await stablecoinInstance.connect(
         sigInstances.buyer
       );
-      const nftPrice = await nftInstance.getPrice(0);
+      const nftPrice = await nftInstance.getPrice(1);
       const StablecoinContractBalanceBefore =
         await stablecoinInstance.balanceOf(marketplaceAddress);
       const StablecoinBuyerBalanceBefore = await stablecoinInstance.balanceOf(
@@ -189,7 +190,7 @@ describe("NFTickets", function () {
       // console.log(addressAprobado)
 
       const buyTicket = await marketplaceInstanceForBuyer.transferNFT(
-        0,
+        1,
         sigAddrs.buyer
       );
       buyTicket.wait();
@@ -223,7 +224,7 @@ describe("NFTickets", function () {
 
       expect(nftBuyerBalanceAfter).to.equal(nftBuyerBalanceBefore.add(1));
 
-      expect(await nftInstance.ownerOf(0)).to.equal(sigAddrs.buyer);
+      expect(await nftInstance.ownerOf(1)).to.equal(sigAddrs.buyer);
     });
 
     it("Should set NFT Price to 0 after transfer", async function () {
@@ -236,7 +237,7 @@ describe("NFTickets", function () {
         sigInstances.nonOwner
       );
       const setPriceTx = marketplaceInstanceForNonOwner.sellTicket(
-        0,
+        1,
         hre.ethers.utils.parseUnits("250", 2)
       );
       await expect(setPriceTx).to.be.revertedWith(
@@ -248,7 +249,7 @@ describe("NFTickets", function () {
         sigInstances.nonOwner
       );
       const buyTicketTx = marketplaceInstanceForNonOwner.transferNFT(
-        0,
+        1,
         sigAddrs.nonOwner
       );
       await expect(buyTicketTx).to.be.revertedWith("Ticket is not for sale");
@@ -259,12 +260,12 @@ describe("NFTickets", function () {
         sigInstances.buyer
       );
       const setPriceTx = await marketplaceInstanceBuyer.sellTicket(
-        0,
+        1,
         hre.ethers.utils.parseUnits("250", 2)
       );
       setPriceTx.wait();
 
-      expect(await nftInstance.nftPrice(0)).to.equal(
+      expect(await nftInstance.nftPrice(1)).to.equal(
         hre.ethers.utils.parseUnits("250", 2)
       );
     });
@@ -275,7 +276,7 @@ describe("NFTickets", function () {
         sigInstances.nonOwner
       );
       const buyTicketTx = marketplaceInstanceForNonOwner.transferNFT(
-        0,
+        1,
         sigAddrs.nonOwner
       );
       await expect(buyTicketTx).to.be.revertedWith("Ticket is not for sale");

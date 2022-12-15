@@ -1,12 +1,12 @@
 const { ethers } = require("hardhat");
+const { nftticketsAddress } = require("./deploy");
+console.log(nftticketsAddress);
 
-deployer = require("./deploy.js");
+// async function create() {
 
-async function main() {
-  console.log(deployer);
-}
+// }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+// create().catch((error) => {
+//   console.error(error);
+//   process.exitCode = 1;
+// });
