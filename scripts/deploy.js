@@ -6,11 +6,7 @@
 // global scope, and execute the script.
 const { getAddress } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
-// const readlinePromises = require("node:readline/promises");
-// const rlInterface = readlinePromises.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// });
+
 const readlinePromise = require("readline-promise").default;
 const rlInterface = readlinePromise.createInterface({
   input: process.stdin,

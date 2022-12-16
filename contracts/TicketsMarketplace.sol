@@ -11,12 +11,12 @@ import "./Splitter.sol";
 /// @notice Contract for Transfering an NFT Ticket 
 /// @dev RachoSuar - TinchoMon
 contract TicketsMarketplace is Ownable {
+
     event nftTransfer(address _from, address _to, uint256 id, uint256 timestamp);
 
     NFTickets nfTickets;
     IERC20 USDCToken;
     address splitter;
-
 
     constructor (address _erc20, address _erc721, address _splitter) {
         nfTickets = NFTickets(_erc721);
@@ -33,6 +33,7 @@ contract TicketsMarketplace is Ownable {
     function create(uint256 timestamp, uint256 _price,string memory _tokenURI) public onlyOwner{
         nfTickets.createTicket(timestamp,_price, _tokenURI);
     }
+
     /// @notice set price for selling NFT Ticket - If price is 0 is not for sale
     /// @dev RachoSuar - TinchoMon
     /// @param tokenID id of the NFT Ticket
@@ -42,24 +43,19 @@ contract TicketsMarketplace is Ownable {
         require(block.timestamp <= nfTickets.getDeadline(tokenID), "You can not sell this ticket. Deadline expired");
         nfTickets.setPrice(tokenID,amount) ;
     }
+
     /// @notice Transfer NFT Ticket
     /// @dev RachoSuar - TinchoMon
     /// @param tokenID id of the NFT Ticket
     /// @param _to address of the new owner of the NFT (can not be the same address that buys)
-    
     function transferNFT(uint256 tokenID, address _to) public {
         require(nfTickets.isOnSale(tokenID),"Ticket is not for sale");
         require(USDCToken.balanceOf(msg.sender)>=nfTickets.getPrice(tokenID),"Unsufficient founds on the account");
         uint256 nftPrice =nfTickets.getPrice(tokenID);
-        //USDCToken.approve(address(this), nftPrice[tokenID]);
         USDCToken.transferFrom(msg.sender, nfTickets.ownerOf(tokenID),nftPrice*95/100);
         USDCToken.transferFrom(msg.sender, splitter,nftPrice*5/100);
-       // require(_isApprovedOrOwner(_msgSender(), tokenID) || ownerOf(tokenID) == address(this), "ERC721: caller is not token owner or approved");
         nfTickets.safeTransferFrom(nfTickets.ownerOf(tokenID), _to, tokenID, "");
         emit nftTransfer(nfTickets.ownerOf(tokenID), _to, tokenID, block.timestamp);
     }
-
-
-     
 
 }

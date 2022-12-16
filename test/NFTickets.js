@@ -183,12 +183,6 @@ describe("NFTickets", function () {
       );
       paymentApprove.wait();
 
-      // const transferApprove = await marketplaceInstance.approve(sigAddrs.buyer, 0);
-      // transferApprove.wait();
-
-      // const addressAprobado = await marketplaceInstance.getApproved(0)
-      // console.log(addressAprobado)
-
       const buyTicket = await marketplaceInstanceForBuyer.transferNFT(
         1,
         sigAddrs.buyer
