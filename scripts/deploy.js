@@ -197,9 +197,9 @@ async function main() {
   );
   setForSale.wait();
   console.log(
-    `Is ticket number ${ticketSelected}  for sale?, ${await nftticketsInstance.isOnSale(
+    `Is ticket number ${ticketSelected}  for sale?, 👌🏽 ${await nftticketsInstance.isOnSale(
       ticketSelected
-    )} and it price is ${
+    )} 👌🏽 and it price is ${
       (await nftticketsInstance.getPrice(ticketSelected)) / 100
     }`
   );
@@ -211,7 +211,7 @@ async function main() {
   const marketplaceInstanceforBuyer2 = marketplaceInstance.connect(buyer2);
   const stablecoinInstanceforBuyer2 = stablecoinInstance.connect(buyer2);
 
-  nftPrice = await nftticketsInstance.getPrice(1);
+  nftPrice = await nftticketsInstance.getPrice(ticketSelected);
   //Approve marketplace to take stablecoins from buyer wallet
   approval = await stablecoinInstanceforBuyer2.approve(
     marketplaceAddress,
@@ -219,18 +219,18 @@ async function main() {
   );
   approval.wait();
   const transferTxforBuyer2 = await marketplaceInstanceforBuyer2.transferNFT(
-    1,
+    ticketSelected,
     buyer2.address
   );
   transferTxforBuyer2.wait();
   console.log(
-    `Transaction successful, ${await nftticketsInstance.ownerOf(
-      1
+    `Transaction successful ✅, ${await nftticketsInstance.ownerOf(
+      ticketSelected
     )} is the new owner`
   );
   console.log(
     `NFT price set to ${await nftticketsInstance.getPrice(
-      1
+      ticketSelected
     )}, It's not for sale anymore`
   );
   console.log(
