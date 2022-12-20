@@ -1,7 +1,7 @@
 <h1 align="center">TRAVEL X MARKETPLACE </h1>
 
 <p align="center" background="white">
-    <p align="center">  <a href="https://www.travelx.io/" target="_blank" rel="noreferrer"> <img src="https://www.travelx.io/wp-content/uploads/2022/02/logo-black.svg" alt="travelX" width="200" height="200"/> </a>
+    <p align="center">  <a href="https://www.travelx.io/" target="_blank" rel="noreferrer"> <img src="https://www.travelx.io/wp-content/uploads/2022/02/logo-white.svg" alt="travelX" width="200" height="200"/> </a>
 </p>
 
 ## Situation
