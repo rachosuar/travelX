@@ -148,7 +148,7 @@ describe("NFTickets", function () {
       );
       tokenId = nftInstance.totalSupply;
       const createTicket = marketplaceInstanceForNonOwner.create(
-        1672341981,
+        ls,
         hre.ethers.utils.parseUnits("1000.0", 2),
         tokenId
       );
