@@ -43,4 +43,10 @@
 ### 5. Run deployment script
 
 In a separate terminal execute:
-`$ npm run`
+`$ npm run program`
+
+## Important!
+
+- TravelX works with Algorand blockchian, this work was made as a challenge with the tools we have and works great on EVM blockchains. It's important to know that this job needs to be adapted to work on AVM.
+
+-During the interaction with scripts, NFT creation is limited to 3 because of the IPFS metadata. To create more tickets the IPFS database should be amplified

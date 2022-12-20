@@ -6,7 +6,7 @@
   "scripts": {
     "test": "npx hardhat test",
     "start": "npx hardhat node",
-    "run": "npx hardhat run scripts/deploy.js --network localhost"
+    "program": "npx hardhat run scripts/deploy.js --network localhost"
   },
   "author": "rachosuar",
   "license": "ISC",
