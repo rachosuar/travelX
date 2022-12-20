@@ -10,8 +10,9 @@
 
 ## Arquitecture
 
-<img src="./arch.png" alt="arch" width="300" height="300">
-
+<p align="center">
+<img src="./arch.png" alt="arch" width="700" height="500">
+</p>
 ## Technology Stack & Tools
 
 - Solidity (Writing Smart Contracts & Tests)
